@@ -13,11 +13,11 @@ from graph_config import GraphConfig
 
 def get_options():
     parser = ArgumentParser()
-    parser.add_argument('-n', '--size', type=int, required=True, nargs='+')
+    parser.add_argument('--size', type=int, required=True, nargs='+')
     parser.add_argument('-d', type=int, required=True)
     parser.add_argument('-r', type=int, default=-1)
     parser.add_argument('-p', '--prefix', type=str, required=True)
-    parser.add_argument('--n-graphs', type=int, default=1)
+    parser.add_argument('--ngraphs', type=int, default=1)
     return parser.parse_args()
 
 def base_graph(conf, d):
@@ -83,8 +83,8 @@ def main():
         os.mkdir(dirname)
 
     mcount = 1
-    fmtstr = '{}-{:0' + str(len(str(opts.n_graphs-1))) + 'd}.elist'
-    while s.check() == sat and mcount < opts.n_graphs:
+    fmtstr = '{}-{:0' + str(len(str(opts.ngraphs))) + 'd}.elist'
+    while s.check() == sat and (opts.ngraphs <= 0 or mcount <= opts.ngraphs):
         m = s.model()
         H = G.copy()
         for u, v in product(G.nodes(), G.nodes()):
@@ -93,13 +93,6 @@ def main():
 
         filename = fmtstr.format(opts.prefix, mcount)
         nx.write_edgelist(H, filename, data=False)
-        """
-        with open(os.path.join(dirname, filename), 'w') as fp:
-            fp.write('\n'.join(map(
-                lambda e: ' '.join(map(str, e)),
-                H.edges_iter())
-            ))
-        """
 
         s = add_new_solution(s, m, E)
         mcount += 1

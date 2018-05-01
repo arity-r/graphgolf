@@ -19,6 +19,9 @@ class GraphConfig(object):
     def get_r(self):
         return self._r
 
+    def set_r(self, r):
+        self._r = r
+
     def get_dim(self):
         return self._dim
 

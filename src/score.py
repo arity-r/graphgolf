@@ -21,8 +21,11 @@ def print_row(ifile, ofile, size):
     else:
         conf = GraphConfig(size)
         r = max(conf.dist(e[0], e[1]) for e in G.edges())
-    diam = nx.diameter(G)
-    aspl = nx.average_shortest_path_length(G)
+    if nx.is_connected(G):
+        diam = nx.diameter(G)
+        aspl = nx.average_shortest_path_length(G)
+    else:
+        diam, aspl = float('inf'), float('inf')
     print('{},{},{},{},{},{},{}'.format(
         ifile,
         G.number_of_nodes() if size is None else
