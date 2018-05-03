@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import division, print_function
 import os.path
-import operator as op
-from functools import reduce
-from itertools import product
 from argparse import ArgumentParser
 
 import networkx as nx
+from networkx.algorithms import isomorphism as iso
 from z3 import *
 
 from graph_config import GraphConfig
@@ -39,43 +37,38 @@ def base_graph(conf, d):
     return G, degseq
 
 def make_sat_vars(conf, G, degseq):
-    E = dict()
+    E, Erev = dict(), dict()
     for u in range(conf.get_n()):
         if degseq[u] == 0:
             continue
-        E[u] = dict()
         nn = conf.neighbors(u)
         for v in nn:
             if degseq[v] == 0:
                 continue
             if u < v:
-                E[u][v] = Bool('E_{}_{}'.format(u, v))
+                E[(u, v)] = Bool('E_{}_{}'.format(u, v))
+                Erev[E[(u, v)]] = (u, v)
             else:
-                E[u][v] = E[v][u]
+                E[(u, v)] = E[(v, u)]
 
-    return E
+    return E, Erev
 
 def make_sat_solver(E, degseq):
     s = Solver()
-    s.add([
-        reduce(op.add, map(lambda e: If(e, 1, 0), v.values())) == degseq[k]
-        for k, v in E.items()
-    ])
-    return s
-
-def add_new_solution(s, m, E):
-    s.add(Not(And(list(map(
-        lambda e: e if m.eval(e) else Not(e),
-        reduce(op.or_, map(lambda v: set(v.values()), E.values()))
-    )))))
+    fs = [0]*len(degseq)
+    for (u, v), val in E.items():
+        fs[u] = fs[u] + If(val, 1, 0)
+    for u in range(len(fs)):
+        fs[u] = fs[u] == degseq[u]
+    s.add(fs)
     return s
 
 def main():
     opts = get_options()
 
     conf = GraphConfig(opts.size, opts.r)
-    G, degseq = base_graph(conf, opts.d)
-    E = make_sat_vars(conf, G, degseq)
+    Gbase, degseq = base_graph(conf, opts.d)
+    E, Erev = make_sat_vars(conf, Gbase, degseq)
     s = make_sat_solver(E, degseq)
 
     dirname = os.path.dirname(opts.prefix)
@@ -86,15 +79,21 @@ def main():
     fmtstr = '{}-{:0' + str(len(str(opts.ngraphs))) + 'd}.elist'
     while s.check() == sat and (opts.ngraphs <= 0 or mcount <= opts.ngraphs):
         m = s.model()
-        H = G.copy()
-        for u, v in product(G.nodes(), G.nodes()):
-            if u in E and v in E[u] and m.eval(E[u][v]):
-                H.add_edge(u, v)
 
+        G = Gbase.copy()
+        G.add_edges_from((u, v) for u, v in Erev.values() if m.eval(E[(u, v)]))
         filename = fmtstr.format(opts.prefix, mcount)
-        nx.write_edgelist(H, filename, data=False)
+        nx.write_edgelist(G, filename, data=False)
 
-        s = add_new_solution(s, m, E)
+        # add new solution
+        # s = add_new_solution(s, m, E)
+        for i in iso.GraphMatcher(G, G.copy()).isomorphisms_iter():
+            if any((i[u], i[v]) not in E for u, v in Erev.values()):
+                continue
+            s.add(Not(And([
+                l if m.eval(E[(i[u], i[v])]) else Not(l)
+                for l, (u, v) in Erev.items()
+            ])))
         mcount += 1
 
 if __name__ == '__main__':
