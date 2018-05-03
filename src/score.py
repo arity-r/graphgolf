@@ -10,7 +10,7 @@ def get_options():
     parser = ArgumentParser()
     parser.add_argument('-n', '--size', type=int, nargs='*')
     parser.add_argument('-o', '--output', type=str)
-    parser.add_argument('ifiles', nargs='*')
+    parser.add_argument('-i', '--input', type=str, nargs='*', required=True)
     return parser.parse_args()
 
 def print_row(ifile, ofile, size):
@@ -39,7 +39,7 @@ def main():
     ostream = open(opts.output, 'w') if opts.output else sys.stdout
 
     print('name,size,n,d,r,diam,aspl', file=ostream)
-    for ifile in opts.ifiles:
+    for ifile in opts.input:
         print_row(ifile, ostream, opts.size)
 
 if __name__ == '__main__':
