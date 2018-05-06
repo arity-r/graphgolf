@@ -40,23 +40,18 @@ class GraphConfig(object):
             return -1
 
     def loc(self, vid):
-        if len(self._dim) == 1:
-            return vid
-        else:
-            return tuple(map(
-                lambda c, d: vid // c % d,
-                self._const, self._dim
-            ))
+        return tuple(map(
+            lambda c, d: vid // c % d,
+            self._const, self._dim
+        ))
 
     def dist(self, u, v):
         loc_u, loc_v = self.loc(u), self.loc(v)
-        if len(self._dim) == 1:
-            return abs(loc_u - loc_v)
-        else:
-            return sum(map(lambda a, b: abs(a-b), loc_u, loc_v))
+        return sum(map(lambda a, b: abs(a-b), loc_u, loc_v))
 
     def are_neighbors(self, u, v):
-        return self.dist(u, v) <= self._r if self._r >= 0 else True
+        return u != v and self.dist(u, v) <= self._r if self._r >= 0 else\
+                    True
 
     def neighbors(self, u):
         if(self._r < 0):
