@@ -3,8 +3,8 @@
 
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/spirit/include/qi.hpp>
-
 #include <boost/graph/edge_list.hpp>
+#include <climits>
 #include <fstream>
 #include <map>
 #include <numeric>
@@ -12,13 +12,13 @@
 
 namespace gg {
 
-  bfs_visitor::bfs_visitor(std::map<Vertex, int> *dist,
-                           int *max_dist, int *n_v_visited):
+  bfs_visitor::bfs_visitor(std::map<Vertex, unsigned long> *dist,
+                           unsigned long *max_dist, unsigned long *n_v_visited):
     _dist(dist), _max_dist(max_dist), _n_v_visited(n_v_visited) {
   }
 
   void bfs_visitor::initialize_vertex(const Vertex &s, const Graph &G) {
-    _dist->insert(std::pair<Vertex, int>(s, 0));
+    _dist->insert(std::pair<Vertex, unsigned long>(s, 0));
   }
 
   void bfs_visitor::discover_vertex(const Vertex &u, const Graph &G) {
@@ -35,22 +35,22 @@ namespace gg {
     return *_n_v_visited == _dist->size();
   }
 
-  int bfs_visitor::sum_dist() const {
-    int dist = 0;
-    for(std::map<Vertex, int>::const_iterator it = _dist->begin();
+  unsigned long bfs_visitor::sum_dist() const {
+    unsigned long dist = 0;
+    for(std::map<Vertex, unsigned long>::const_iterator it = _dist->begin();
         it != _dist->end(); ++it) {
       dist += it->second;
     }
     return dist;
   }
 
-  int bfs_visitor::max_dist() const {
+  unsigned long bfs_visitor::max_dist() const {
     return *_max_dist;
   }
 
-  std::pair<int, int> score(const Graph &G) {
-    std::map<Vertex, int> dist;
-    int n_visited, diam = 0, sspl = 0;
+  std::pair<unsigned long, unsigned long> score(const Graph &G) {
+    std::map<Vertex, unsigned long> dist;
+    unsigned long n_visited, diam = 0, sspl = 0;
     typedef boost::graph_traits<Graph>::vertex_iterator vert_it;
     vert_it vit, vit_end;
     for(boost::tie(vit, vit_end) = vertices(G); vit != vit_end; ++vit) {
@@ -60,14 +60,14 @@ namespace gg {
       bfs_visitor vis(&dist, &diam, &n_visited);
       boost::breadth_first_search(G, s, boost::visitor(vis));
       if(!vis.all_visited()) {
-        diam = sspl = -1;
+        diam = sspl = ULONG_MAX;
         break;
       } else {
         diam = vis.max_dist();
         sspl += vis.sum_dist();
       }
     }
-    return std::pair<int, int>(diam, sspl);
+    return std::pair<unsigned long, unsigned long>(diam, sspl);
   }
 
   Graph read_edgelist(std::string filename) {

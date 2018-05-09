@@ -8,7 +8,7 @@ CFLAGS := -g -O3 -march=native -Wall \
 .PHONY: all clean
 .PRECIOUS: %.cpp %.o
 
-all: test_graph_config.out opt-hc.out
+all: opt-hc.out opt-sa.out test_graph_config.out
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $< $(LIBS)
