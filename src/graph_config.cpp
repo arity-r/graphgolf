@@ -1,9 +1,12 @@
 #include "graph_config.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <numeric>
 #include <utility>
+
+#include <iostream>
 
 namespace gg {
 
@@ -51,9 +54,42 @@ namespace gg {
 
 	std::vector<Vertex> GraphConfig::neighbors(const Vertex &v) const {
 		std::vector<Vertex> nei;
-		for(int w = 0; w < _n; w++)
-			if(are_neighbors(v, w))
-				nei.push_back(w);
+    if(_dim.size() == 1 || _r < 0) {
+      nei.resize(_n - 1);
+      std::generate(nei.begin(), nei.begin()+(v-1),
+                    [n = 0] () mutable { return n++; });
+      std::generate(nei.begin()+(v+1), nei.end(),
+                    [n = v+1] () mutable { return n++; });
+    } else {
+      std::vector<int> minidim(_dim.size());
+      std::fill(minidim.begin(), minidim.end(), 2*_r+1);
+      GraphConfig miniconf(minidim);
+      int maxidx = std::accumulate(minidim.begin(), minidim.end(), 1,
+                                   std::multiplies<int>());
+      std::vector<int> v_loc = this->loc(v);
+      for(int di = 1; di <= maxidx; di++) {
+        std::vector<int> loc(_dim.size());
+        bool valid_loc = true;
+        std::vector<int> diff = miniconf.loc(di);
+        std::transform(diff.begin(), diff.end(), diff.begin(),
+                       [r = _r](int d) -> int { return d - r; });
+        int sumdiff = 0;
+        for(size_t i = 0; i < loc.size(); i++) {
+          loc[i] = v_loc[i] + diff[i];
+          sumdiff += abs(diff[i]);
+          std::cout << loc[i] << " ";
+          if(loc[i] < 0 || loc[i] >= _dim[i] || sumdiff > _r) {
+            valid_loc = false;
+            break;
+          }
+        }
+        std::cout << std::endl;
+        if(!valid_loc || sumdiff == 0) continue;
+        Vertex w = vid(loc);
+        if(w >= 0) nei.push_back(w);
+      }
+      std::cout << std::endl;
+    }
 		return nei;
 	}
 

@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   options_description desc("optional arguments");
   desc.add_options()
     ("help", "show this help message and exit")
-    ("size", value<vector<int> >()->multitoken()->required(), "")
+    ("size", value<vector<int> >()->multitoken(), "")
     (",r", value<int>()->default_value(-1), "")
     (",T", value<double>()->default_value(10), "")
     ("heat-loss", value<double>()->default_value(1e-3), "")
@@ -54,9 +54,6 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  vector<int> size = vm["size"].as<vector<int> >();
-  int r = vm["-r"].as<int>();
-  GraphConfig conf(size, r);
 
   string input = vm["input"].as<string>();
   string output = vm["output"].as<string>();
@@ -68,6 +65,12 @@ int main(int argc, char* argv[]) {
 
   Graph G = read_edgelist(input);
   size_t n = num_vertices(G);
+
+  vector<int> size;
+  if(!vm.count("size")) size.push_back(n);
+  else size = vm["size"].as<vector<int> >();
+  int r = vm["-r"].as<int>();
+  GraphConfig conf(size, r);
 
   double T = vm["-T"].as<double>();
   int iteration = 1;
@@ -91,7 +94,6 @@ int main(int argc, char* argv[]) {
     random_swap(&H, conf);
     pair<unsigned long, unsigned long> curr_score_pair = score(H);
     double curr_score = curr_score_pair.first*n*n*n + curr_score_pair.second;
-    cout << "curr_score = " << curr_score << endl;
     if(curr_score < best_score ||
        (double)rand() / RAND_MAX < exp((best_score - curr_score) / t)) {
       G = H;

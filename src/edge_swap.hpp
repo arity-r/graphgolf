@@ -5,6 +5,10 @@
 #include "graph_config.hpp"
 
 namespace gg {
+  bool select_edges_nodim(Graph *G,
+                          Vertex *u, Vertex *v, Vertex *x, Vertex *y);
+  bool select_edges_dim(Graph *G, GraphConfig conf,
+                        Vertex *u, Vertex *v, Vertex *x, Vertex *y);
   bool edge_swap(Graph *G, GraphConfig conf, Edge e, Edge f);
   bool edge_swap(Graph *G, GraphConfig conf,
                  Vertex u, Vertex v, Vertex x, Vertex y);
