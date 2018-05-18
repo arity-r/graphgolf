@@ -108,7 +108,7 @@ namespace gg {
       tries += 1;
       if(tries > max_tries) {
         std::cerr << "Maximum number of swap trials (" << max_tries_per_swap
-                  << ") exceeded";
+                  << ") exceeded" << std::endl;
         return false;
       }
       Vertex u, v, x, y;

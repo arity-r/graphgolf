@@ -10,6 +10,7 @@ import networkx as nx
 from z3 import *
 
 from graph_config import GraphConfig
+from edge_swap import random_swap
 
 def get_options():
     parser = ArgumentParser()
@@ -102,6 +103,8 @@ def main():
             if u in E and v in E[u] and m.eval(E[u][v]):
                 G.add_edge(u, v)
 
+    while not nx.is_connected(G):
+        random_swap(G, conf)
     nx.write_edgelist(G, opts.ofile, data=False)
 
 if __name__ == '__main__':

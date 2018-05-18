@@ -32,7 +32,10 @@ def optimize(G, conf, param):
     total_iteration = int(-log(param.T)/log(cooling_rate)*param.iteration)
     iprint, nprint = 1, 1000
     for i in range(1, total_iteration):
-        H = random_swap(G.copy(), conf)
+        try:
+            H = random_swap(G.copy(), conf, max_tries_per_swap=1000)
+        except:
+            H = G
         if nx.is_connected(H):
             diam_H = nx.diameter(H)
             aspl_H = nx.average_shortest_path_length(H)
